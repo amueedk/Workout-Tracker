@@ -74,13 +74,19 @@ function deleteWorkout(workoutId, btn) {
         return;
     }
 
-    fetch(`${API_URL}/${workoutId}`, { 
+    fetch(API_URL, {  
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workout_id: workoutId }) // Send body
     })
     .then(response => response.json())
     .then(data => {
         console.log("Workout deleted:", data);
-        btn.parentNode.parentNode.remove(); // ✅ Remove row from UI
+        if (data.message === "Workout deleted") {
+            btn.parentNode.parentNode.remove(); 
+        } else {
+            console.error("Error:", data);
+        }
     })
     .catch(error => console.error("Error:", error));
 }
