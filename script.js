@@ -10,16 +10,19 @@ function addWorkout() {
         alert("Please fill all fields.");
         return;
     }
-    if (weight < 0) {
-        alert("Weight cannot be negative.");
-        return;
-    }
 
     let workout = { exercise, sets, reps, weight };
-    saveWorkout(workout);
-    displayWorkout(workout);
-    clearInputs();
+
+    fetch("https://ubhlj9lky5.execute-api.us-east-1.amazonaws.com/workouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(workout)
+    })
+    .then(response => response.json())
+    .then(data => console.log("Workout added:", data))
+    .catch(error => console.error("Error:", error));
 }
+
 
 function saveWorkout(workout) {
     let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
@@ -28,9 +31,15 @@ function saveWorkout(workout) {
 }
 
 function loadWorkouts() {
-    let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
-    workouts.forEach(displayWorkout);
+    fetch("https://ubhlj9lky5.execute-api.us-east-1.amazonaws.com/workouts")
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById("workout-list").innerHTML = "";
+        data.forEach(displayWorkout);
+    })
+    .catch(error => console.error("Error:", error));
 }
+
 
 function displayWorkout(workout) {
     let table = document.getElementById("workout-list");
@@ -41,19 +50,25 @@ function displayWorkout(workout) {
         <td>${workout.sets}</td>
         <td>${workout.reps}</td>
         <td>${workout.weight}</td>
-        <td><button class="delete-btn" onclick="deleteWorkout(this)">🗑️ Delete</button></td>
+        <td><button class="delete-btn" onclick="deleteWorkout(this)">Delete</button></td>
     `;
 }
 
 function deleteWorkout(btn) {
     let row = btn.parentNode.parentNode;
-    let exercise = row.cells[0].textContent;
+    let workoutId = row.getAttribute("data-id");
 
-    let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
-    workouts = workouts.filter(w => w.exercise !== exercise);
-    localStorage.setItem("workouts", JSON.stringify(workouts));
-
-    row.remove();
+    fetch("https://ubhlj9lky5.execute-api.us-east-1.amazonaws.com/workouts", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workout_id: workoutId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Workout deleted:", data);
+        row.remove();
+    })
+    .catch(error => console.error("Error:", error));
 }
 
 function clearInputs() {
