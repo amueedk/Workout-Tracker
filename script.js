@@ -8,7 +8,7 @@ function addWorkout() {
     let reps = document.getElementById("reps").value;
     let weight = document.getElementById("weight").value;
 
-    if (exercise === "" || sets === "" || reps === "" || weight === "") {
+    if (!exercise || !sets || !reps || !weight) {
         alert("Please fill all fields.");
         return;
     }
@@ -27,7 +27,8 @@ function addWorkout() {
             alert("Error: " + data.error);
         } else {
             alert("Workout added!");
-            loadWorkouts(); // Refresh the table
+            clearInputs();
+            loadWorkouts();
         }
     })
     .catch(error => console.error("Error:", error));
@@ -37,8 +38,8 @@ function loadWorkouts() {
     fetch(API_URL)
     .then(response => response.json())
     .then(data => {
-        console.log("API Response:", data);  // ✅ Log the response
-        if (!Array.isArray(data)) {  // ✅ Prevent crashing
+        console.log("API Response:", data);
+        if (!Array.isArray(data)) {
             console.error("Error: API did not return an array", data);
             return;
         }
@@ -49,37 +50,37 @@ function loadWorkouts() {
 }
 
 function displayWorkout(workout) {
+    if (!workout.workout_id) {
+        console.error("Missing workout ID:", workout);
+        return;
+    }
+
     let table = document.getElementById("workout-list");
     let row = table.insertRow();
-    row.setAttribute("data-id", workout.workout_id);  // ✅ Ensure the row has a unique ID
+    row.setAttribute("data-id", workout.workout_id);
 
     row.innerHTML = `
         <td>${workout.exercise}</td>
         <td>${workout.sets}</td>
         <td>${workout.reps}</td>
         <td>${workout.weight}</td>
-        <td><button class="delete-btn" onclick="deleteWorkout(this)">Delete</button></td>
+        <td><button class="delete-btn" onclick="deleteWorkout('${workout.workout_id}', this)">Delete</button></td>
     `;
 }
 
-function deleteWorkout(btn) {
-    let row = btn.parentNode.parentNode;
-    let workoutId = row.getAttribute("data-id");
-
+function deleteWorkout(workoutId, btn) {
     if (!workoutId) {
         console.error("Workout ID is missing for deletion");
         return;
     }
 
-    fetch(API_URL, {
+    fetch(`${API_URL}/${workoutId}`, { 
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workout_id: workoutId })
     })
     .then(response => response.json())
     .then(data => {
         console.log("Workout deleted:", data);
-        row.remove();
+        btn.parentNode.parentNode.remove(); // ✅ Remove row from UI
     })
     .catch(error => console.error("Error:", error));
 }
