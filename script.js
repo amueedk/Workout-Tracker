@@ -1,3 +1,5 @@
+const API_URL = "https://vmaojg7rqf.execute-api.us-east-1.amazonaws.com/workouts";
+
 document.addEventListener("DOMContentLoaded", loadWorkouts);
 
 function addWorkout() {
@@ -13,25 +15,26 @@ function addWorkout() {
 
     let workout = { exercise, sets, reps, weight };
 
-    fetch("https://ubhlj9lky5.execute-api.us-east-1.amazonaws.com/workouts", {
+    fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(workout)
     })
     .then(response => response.json())
-    .then(data => console.log("Workout added:", data))
+    .then(data => {
+        console.log("Workout added:", data);
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            alert("Workout added!");
+            loadWorkouts(); // Refresh the table
+        }
+    })
     .catch(error => console.error("Error:", error));
 }
 
-
-function saveWorkout(workout) {
-    let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
-    workouts.push(workout);
-    localStorage.setItem("workouts", JSON.stringify(workouts));
-}
-
 function loadWorkouts() {
-    fetch("https://ubhlj9lky5.execute-api.us-east-1.amazonaws.com/workouts")
+    fetch(API_URL)
     .then(response => response.json())
     .then(data => {
         console.log("API Response:", data);  // ✅ Log the response
@@ -45,10 +48,10 @@ function loadWorkouts() {
     .catch(error => console.error("Error:", error));
 }
 
-
 function displayWorkout(workout) {
     let table = document.getElementById("workout-list");
     let row = table.insertRow();
+    row.setAttribute("data-id", workout.workout_id);  // ✅ Ensure the row has a unique ID
 
     row.innerHTML = `
         <td>${workout.exercise}</td>
@@ -63,7 +66,12 @@ function deleteWorkout(btn) {
     let row = btn.parentNode.parentNode;
     let workoutId = row.getAttribute("data-id");
 
-    fetch("https://ubhlj9lky5.execute-api.us-east-1.amazonaws.com/workouts", {
+    if (!workoutId) {
+        console.error("Workout ID is missing for deletion");
+        return;
+    }
+
+    fetch(API_URL, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workout_id: workoutId })
