@@ -34,6 +34,11 @@ function loadWorkouts() {
     fetch("https://ubhlj9lky5.execute-api.us-east-1.amazonaws.com/workouts")
     .then(response => response.json())
     .then(data => {
+        console.log("API Response:", data);  // ✅ Log the response
+        if (!Array.isArray(data)) {  // ✅ Prevent crashing
+            console.error("Error: API did not return an array", data);
+            return;
+        }
         document.getElementById("workout-list").innerHTML = "";
         data.forEach(displayWorkout);
     })
